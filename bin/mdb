@@ -1,29 +1,32 @@
 #!/bin/sh
 
-
 load_vars()
 {
-	MDB_SGBD=$1;
+	MDB_CONFIG=$1;
 	MDB_CMD=$2;
 	MDB_DB=$3;
 	MDB_FILE=$4;
-	MDB_IMAGE="";
+	ERR='\033[0;31m';
+ 	WAR='\033[0;33m';
+ 	NC='\033[0m';
+
 
 	if [ "$MDB_HOME" == "" ]; then
 		MDB_HOME=/etc/mdb;
 	fi
+
 }
 
 check_inputs()
 {
-	FILE_CONFIG="$MDB_HOME/configs/${MDB_SGBD}.conf";
+	FILE_CONFIG="$MDB_HOME/configs/${MDB_CONFIG}.container.conf";
 	if [ ! -f "$FILE_CONFIG" ]; then
-		echo "SGBD not found.";
+		echo "Configuration not found for: $MDB_CONFIG";
 		echo "Values avaliable:";
 		echo "	postgres";
 		echo "	mysql";
 		echo "";
-		echo "The instruction expected is: mdb <sgbd>"
+		echo "The instruction expected is: mdb <configuration>"
 		echo "";
 		exit 1;
 	fi
@@ -37,21 +40,21 @@ check_inputs()
 		echo "	drop <database>            - Drop database at SGBD if it exists.";
 		echo "	restore <database> <file>  - Restore file at that database.";
 		echo "";
-		echo "The instruction expected is: mdb $MDB_SGBD <option>"
+		echo "The instruction expected is: mdb $MDB_CONFIG <option>"
 		echo "";
 		exit 1;
 	fi	
 	
 	if [ "$MDB_CMD" == "drop" ] || [ "$MDB_CMD" == "create" ] || [ "$MDB_CMD" == "restore" ] && [ "$MDB_DB" == "" ]  ; then
 		echo "No database information"
-		echo "The instruction expected is: mdb $MDB_SGBD $MDB_CMD <database>"
+		echo "The instruction expected is: mdb $MDB_CONFIG $MDB_CMD <database>"
 		echo "";
 		exit 1;
 	fi
 
 	if [ "$MDB_CMD" == "restore" ] && [ "$MDB_FILE" == "" ]  ; then
 		echo "No file information"
-		echo "The instruction expected is: mdb $MDB_SGBD $MDB_CMD $MDB_DB <file>"
+		echo "The instruction expected is: mdb $MDB_CONFIG $MDB_CMD $MDB_DB <file>"
 		echo "";
 		exit 1;
 	fi
@@ -71,8 +74,8 @@ load_config()
 	while read i ; do
 		while IFS='=' read -ra j; do
 			case ${j[0]} in
-				image) 
-					MDB_IMAGE=${j[1]};
+				sgbd) 
+					MDB_SGBD=${j[1]};
 					break;;
 				version) 
 					MDB_VERSION=${j[1]};
@@ -80,42 +83,39 @@ load_config()
 				container_name) 
 					MDB_NAME=${j[1]};
 					break;;
-				data) 
-					MDB_DATA=${j[1]};
-					break;;
-				user) 
-					MDB_USER=${j[1]};
-					break;;
-				pass) 
+				password) 
 					MDB_PASS=${j[1]};
 					break;;
-				port_cont) 
-					MDB_PORT_CONTAINER=${j[1]};
-					break;;
-				port_ext) 
-					MDB_PORT_EXTERNAL=${j[1]};
+				port) 
+					MDB_PORT=${j[1]};
 					break;;
 			esac
 		done <<< "$i"
 	done < $1
+	
+	if [ "$MDB_SGBD" == "" ] || [ "$MDB_VERSION" == "" ] || [ "$MDB_NAME" == "" ] || [ "$MDB_PASS" == "" ] || [ "$MDB_PORT" == "" ]; then
+		echo "Configurations invalid. Required field is empty."
+		exit 1
+	fi
 }
 
 execute_command(){
 	case $1 in
 		start)
-			sh $MDB_HOME/bin/start_sgbd $MDB_IMAGE $MDB_VERSION $MDB_NAME $MDB_DATA $MDB_USER $MDB_PASS $MDB_PORT_CONTAINER $MDB_PORT_EXTERNAL
+			MDB_VOLUME_DATA="$MDB_HOME/volumes/$MDB_CONFIG";
+			sh $MDB_HOME/bin/start_sgbd $MDB_SGBD $MDB_VOLUME_DATA $MDB_VERSION $MDB_NAME $MDB_PASS $MDB_PORT
 			break;;
 		stop)
 			sh $MDB_HOME/bin/stop_sgbd $MDB_NAME
 			break;;
 		create)
-			sh $MDB_HOME/bin/create_database $MDB_NAME $MDB_USER $MDB_PASS $MDB_DB
+			sh $MDB_HOME/bin/create_database $MDB_NAME $MDB_PASS $MDB_DB
 			break;;
 		drop)
-			sh $MDB_HOME/bin/drop_database $MDB_NAME $MDB_USER $MDB_PASS $MDB_DB
+			sh $MDB_HOME/bin/drop_database $MDB_NAME $MDB_PASS $MDB_DB
 			break;;
 		restore)
-			sh $MDB_HOME/bin/restore_database $MDB_NAME $MDB_USER $MDB_PASS $MDB_DB $MDB_FILE
+			sh $MDB_HOME/bin/restore_database $MDB_NAME $MDB_PASS $MDB_DB $MDB_FILE
 			break;;
 	esac
 }
