@@ -1,4 +1,77 @@
 #!/bin/sh
 
-echo "Starting..."
-echo "$@"
+read_inputs()
+{
+	MDB_SGBD=$1; 
+	MDB_VOLUME_DATA=$2;
+	MDB_VERSION=$3;
+	MDB_NAME=$4;
+	MDB_PASS=$5;
+	MDB_PORT=$6;
+	ERR='\033[0;31m';
+	WAR='\033[0;33m';
+	NC='\033[0m';
+}
+
+check_container_execute()
+{
+	echo "Checking container execution with name: $MDB_NAME";
+  
+	MDB_CONTAINER_EXEC=$(docker ps -f=name=$MDB_NAME | grep $MDB_NAME);
+	if [ "$MDB_CONTAINER_EXEC" != "" ]; then
+		printf "${WAR}Container already executing with this name.${NC}\n"
+		exit 1;
+	else
+		docker rm -f $MDB_NAME > /dev/null 2>&1
+	fi
+
+}
+
+check_volume_for_data()
+{
+	if [ ! -d $MDB_VOLUME_DATA ]; then
+		echo "Creating volume for datas..."
+		mkdir -p $MDB_VOLUME_DATA;
+	else
+		echo "Volume for datas is ok."
+	fi
+}
+
+start_container()
+{
+
+	case $MDB_SGBD in
+		postgres)
+			MDB_SGBD_COMMAND_START="docker run -d -e POSTGRES_PASSWORD=$MDB_PASS -v $MDB_VOLUME_DATA:/var/lib/postgresql/data -p $MDB_PORT:5432 --name $MDB_NAME postgres:$MDB_VERSION";
+			break;;
+		mysql)
+			MDB_SGBD_COMMAND_START="docker run -d -e MYSQL_ROOT_PASSWORD=$MDB_PASS -v $MDB_VOLUME_DATA:/var/lib/mysql -p $MDB_PORT:3306 --name $MDB_NAME mysql:$MDB_VERSION";
+			break;;
+		*)
+			printf "${ERR}SGBD '$MDB_SGBD' not supported.${NC}"
+			exit 1;;
+	esac
+
+	echo "Starting container...";
+	$MDB_SGBD_COMMAND_START;
+	if [ "$?" != "0" ]; then
+		echo "Problem with start container";
+		echo $EXIT_EXECUTE;
+		exit 1;
+	else
+		echo "Container started.";
+		exit 0;
+	fi
+
+}
+
+
+main()
+{
+	read_inputs $@
+	check_container_execute
+	check_volume_for_data
+	start_container
+}
+
+main $@
