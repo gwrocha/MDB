@@ -10,6 +10,7 @@ read_inputs()
 	MDB_PORT=$6;
 	ERR='\033[0;31m';
 	WAR='\033[0;33m';
+	SUC='\033[0;32m';
 	NC='\033[0m';
 }
 
@@ -55,11 +56,10 @@ start_container()
 	echo "Starting container...";
 	$MDB_SGBD_COMMAND_START;
 	if [ "$?" != "0" ]; then
-		echo "Problem with start container";
-		echo $EXIT_EXECUTE;
+		printf "\n${ERR}Problem with start container${NC}\n\n";
 		exit 1;
 	else
-		echo "Container started.";
+		printf "\n${SUC}Container was started.${NC}\n\n";
 		exit 0;
 	fi
 

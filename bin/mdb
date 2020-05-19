@@ -21,18 +21,18 @@ check_inputs()
 {
 	FILE_CONFIG="$MDB_HOME/configs/${MDB_CONFIG}.container.conf";
 	if [ ! -f "$FILE_CONFIG" ]; then
-		echo "Configuration not found for: $MDB_CONFIG";
+		printf "${ERR}Configuration not found for: ${MDB_CONFIG}${NC}\n";
 		echo "Values avaliable:";
 		echo "	postgres";
 		echo "	mysql";
 		echo "";
-		echo "The instruction expected is: mdb <configuration>"
+		printf "${WAR}The instruction expected is: mdb <configuration>${NC}\n"
 		echo "";
 		exit 1;
 	fi
 
 	if [ "$MDB_CMD" != "start" ] && [ "$MDB_CMD" != "stop" ] && [ "$MDB_CMD" != "drop" ] && [ "$MDB_CMD" != "create" ] && [ "$MDB_CMD" != "restore" ] ; then
-		echo "Option '$MDB_CMD' not avaliable";
+		printf "${ERR}Option '$MDB_CMD' not avaliable${NC}\n";
 		echo "Values avaliable:";
 		echo "	start                      - Start SGBD server if not runnig.";
 		echo "	stop                       - Stop SGBD server if running";
@@ -40,27 +40,27 @@ check_inputs()
 		echo "	drop <database>            - Drop database at SGBD if it exists.";
 		echo "	restore <database> <file>  - Restore file at that database.";
 		echo "";
-		echo "The instruction expected is: mdb $MDB_CONFIG <option>"
+		printf "${WAR}The instruction expected is: mdb $MDB_CONFIG <option>${NC}\n"
 		echo "";
 		exit 1;
 	fi	
 	
 	if [ "$MDB_CMD" == "drop" ] || [ "$MDB_CMD" == "create" ] || [ "$MDB_CMD" == "restore" ] && [ "$MDB_DB" == "" ]  ; then
-		echo "No database information"
-		echo "The instruction expected is: mdb $MDB_CONFIG $MDB_CMD <database>"
+		printf "${ERR}No database information${NC}\n"
+		printf "${WAR}The instruction expected is: mdb $MDB_CONFIG $MDB_CMD <database>${NC}\n"
 		echo "";
 		exit 1;
 	fi
 
 	if [ "$MDB_CMD" == "restore" ] && [ "$MDB_FILE" == "" ]  ; then
-		echo "No file information"
-		echo "The instruction expected is: mdb $MDB_CONFIG $MDB_CMD $MDB_DB <file>"
+		printf "${ERR}No file information${NC}\n"
+		printf "${WAR}The instruction expected is: mdb $MDB_CONFIG $MDB_CMD $MDB_DB <file>${NC}\n"
 		echo "";
 		exit 1;
 	fi
 
 	if [ "$MDB_CMD" == "restore" ] && [ ! -f "$MDB_FILE" ]  ; then
-		echo "File not found: $MDB_FILE"
+		printf "${ERR}File not found: $MDB_FILE${NC}\n"
 		echo "";
 		exit 1;
 	fi
