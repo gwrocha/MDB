@@ -6,8 +6,9 @@ WAR='\033[0;33m';
 SUC='\033[0;32m';
 NC='\033[0m';
 
-MDB_CONTAINER_EXEC=$(docker ps -f=name=$MDB_NAME | grep $MDB_NAME);
+echo "Checking container execution with name: $MDB_NAME";
 
+MDB_CONTAINER_EXEC=$(docker ps -f=name=$MDB_NAME | grep $MDB_NAME);
 if [ "$MDB_CONTAINER_EXEC" == "" ]; then
 	printf "${WAR}None container executing with name: $MDB_NAME${NC}\n";
 	exit 1;

@@ -23,7 +23,11 @@ check_container_execute()
 		printf "${WAR}Container already executing with this name.${NC}\n"
 		exit 1;
 	else
+		echo "None container executing with this name."
 		docker rm -f $MDB_NAME > /dev/null 2>&1
+		if [ "$?" == "0" ]; then
+			printf "${WAR}There was a continer stopped with this name. But it was removed.${NC}\n"
+		fi
 	fi
 
 }
