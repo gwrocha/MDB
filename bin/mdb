@@ -110,13 +110,13 @@ execute_command(){
 			sh $MDB_HOME/bin/stop_sgbd $MDB_NAME
 			break;;
 		create)
-			sh $MDB_HOME/bin/create_database $MDB_NAME $MDB_PASS $MDB_DB
+			sh $MDB_HOME/bin/create_database $MDB_SGBD $MDB_NAME $MDB_PASS $MDB_DB
 			break;;
 		drop)
-			sh $MDB_HOME/bin/drop_database $MDB_NAME $MDB_PASS $MDB_DB
+			sh $MDB_HOME/bin/drop_database $MDB_SGBD $MDB_NAME $MDB_PASS $MDB_DB
 			break;;
 		restore)
-			sh $MDB_HOME/bin/restore_database $MDB_NAME $MDB_PASS $MDB_DB $MDB_FILE
+			sh $MDB_HOME/bin/restore_database $MDB_SGBD $MDB_NAME $MDB_PASS $MDB_DB $MDB_FILE
 			break;;
 	esac
 }
