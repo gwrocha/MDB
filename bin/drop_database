@@ -1,4 +1,44 @@
 #!/bin/sh
 
-echo "Dropping..."
-echo "$@"
+MDB_SGBD=$1;
+MDB_NAME=$2;
+MDB_PASS=$3;
+MDB_DB=$4;
+ERR='\033[0;31m';
+WAR='\033[0;33m';
+SUC='\033[0;32m';
+NC='\033[0m';
+
+
+echo "Checking container execution with name: $MDB_NAME";
+
+MDB_CONTAINER_EXEC=$(docker ps -f=name=$MDB_NAME | grep $MDB_NAME);
+if [ "$MDB_CONTAINER_EXEC" == "" ]; then
+  printf "${WAR}None container executing with this name.${NC}\n";
+  exit 1;
+fi
+
+case $MDB_SGBD in
+	postgres)
+		echo "Creating database...";
+		docker exec -it $MDB_NAME runuser -l postgres -c "psql -c \"DROP DATABASE $MDB_DB\""
+		MDB_OUT_CREATE=$?
+		break;;
+	mysql)
+		echo "Creating database...";
+		docker exec -it $MDB_NAME mysql --user=root --password=$MDB_PASS --execute="DROP DATABASE $MDB_DB"
+		MDB_OUT_CREATE=$?
+		break;;
+	*)
+  	printf "${ERR}SGBD '$MDB_SGBD' not supported.${NC}"
+  	exit 1;;
+esac
+
+if [ "$MDB_OUT_CREATE" != "0" ]; then
+  printf "\n${ERR}Problem with dropping database '$MDB_DB' in $MDB_SGBD${NC}\n\n";
+  exit 1;
+else
+		printf "\n${SUC}Database was dropped.${NC}\n\n";
+  exit 0;
+fi
+
