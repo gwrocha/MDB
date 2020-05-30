@@ -3,7 +3,7 @@
 read_inputs()
 {
 	MDB_SGBD=$1; 
-	MDB_VOLUME_DATA=$2;
+	MDB_VOLUME=$2;
 	MDB_VERSION=$3;
 	MDB_NAME=$4;
 	MDB_PASS=$5;
@@ -32,13 +32,31 @@ check_container_execute()
 
 }
 
-check_volume_for_data()
+check_volumes()
 {
+	echo "Checking volumes..."
+	MDB_VOLUME_DATA="$MDB_VOLUME/data"
 	if [ ! -d $MDB_VOLUME_DATA ]; then
-		echo "Creating volume for datas..."
+		echo "Creating volume for data..."
 		mkdir -p $MDB_VOLUME_DATA;
 	else
 		echo "Volume for datas is ok."
+	fi
+
+	MDB_VOLUME_CONF="$MDB_VOLUME/config"
+	if [ ! -d $MDB_VOLUME_CONF ]; then
+		echo "Creating volume for configuration.."
+		mkdir -p $MDB_VOLUME_CONF;
+	else
+		echo "Volume for configuration is ok."
+	fi
+
+	MDB_VOLUME_BKP="$MDB_VOLUME/backup"
+	if [ ! -d $MDB_VOLUME_BKP ]; then
+		echo "Creating volume for backup..."
+		mkdir -p $MDB_VOLUME_BKP
+	else
+		echo "Volume for backup is ok."
 	fi
 }
 
@@ -47,10 +65,10 @@ start_container()
 
 	case $MDB_SGBD in
 		postgres)
-			MDB_SGBD_COMMAND_START="docker run -d -e POSTGRES_PASSWORD=$MDB_PASS -v $MDB_VOLUME_DATA:/var/lib/postgresql/data -p $MDB_PORT:5432 --name $MDB_NAME postgres:$MDB_VERSION";
+			MDB_SGBD_COMMAND_START="docker run -d -e POSTGRES_PASSWORD=$MDB_PASS -v $MDB_VOLUME_DATA:/var/lib/postgresql/data -v $MDB_VOLUME_BKP:/backups -p $MDB_PORT:5432 --name $MDB_NAME postgres:$MDB_VERSION";
 			break;;
 		mysql)
-			MDB_SGBD_COMMAND_START="docker run -d -e MYSQL_ROOT_PASSWORD=$MDB_PASS -v $MDB_VOLUME_DATA:/var/lib/mysql -p $MDB_PORT:3306 --name $MDB_NAME mysql:$MDB_VERSION";
+			MDB_SGBD_COMMAND_START="docker run -d -e MYSQL_ROOT_PASSWORD=$MDB_PASS -v $MDB_VOLUME_DATA:/var/lib/mysql -v $MDB_VOLUME_BKP:/backups -p $MDB_PORT:3306 --name $MDB_NAME mysql:$MDB_VERSION";
 			break;;
 		*)
 			printf "${ERR}SGBD '$MDB_SGBD' not supported.${NC}"
@@ -74,7 +92,7 @@ main()
 {
 	read_inputs $@
 	check_container_execute
-	check_volume_for_data
+	check_volumes
 	start_container
 }
 

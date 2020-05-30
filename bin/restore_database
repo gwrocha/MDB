@@ -1,4 +1,68 @@
 #!/bin/sh
 
-echo "Restoring..."
-echo "$@"
+MDB_SGBD=$1;
+MDB_VOLUME=$2;
+MDB_NAME=$3;
+MDB_PASS=$4;
+MDB_DB=$5;
+MDB_FILE=$6;
+ERR='\033[0;31m';
+WAR='\033[0;33m';
+SUC='\033[0;32m';
+NC='\033[0m';
+
+checking_container(){
+	echo "Checking container execution with name: $MDB_NAME";
+
+	MDB_CONTAINER_EXEC=$(docker ps -f=name=$MDB_NAME | grep $MDB_NAME);
+	if [ "$MDB_CONTAINER_EXEC" == "" ]; then
+		printf "${WAR}None container executing with this name.${NC}\n";
+		exit 1;
+	fi
+}
+
+copy_file(){
+	
+	rm -f $MDB_VOLUME/backup/$MDB_DB.bkp > /dev/null 2>$1
+
+	echo "Copying file..."
+	cp $MDB_FILE $MDB_VOLUME/backup/$MDB_DB.bkp
+	if [ $? -ne 0 ]; then
+		printf "\n${ERR}Problem with copy file '$MDB_FILE' to '$MDB_VOLUME/data'${NC}\n\n";
+		exit 1
+	fi
+}
+
+execute_command(){
+	case $MDB_SGBD in
+		postgres)
+			echo "Beginnig restore...";
+			docker exec -it $MDB_NAME runuser -l postgres -c "pg_restore  -d $MDB_DB /backups/$MDB_DB.bkp "
+			MDB_OUT_RESTORED=$?
+			break;;
+		mysql)
+			echo "Restoring database...";
+			#docker exec -it $MDB_NAME mysql --user=root --password=$MDB_PASS --execute="CREATE DATABASE $MDB_DB"
+			MDB_OUT_RESTORED=$?
+			break;;
+		*)
+			printf "${ERR}SGBD '$MDB_SGBD' not supported.${NC}"
+			exit 1;;
+	esac
+
+	if [ "$MDB_OUT_RESTORED" != "0" ]; then
+		printf "\n${ERR}Problem with restoring database '$MDB_DB' in $MDB_SGBD${NC}\n\n";
+	else
+		printf "\n${SUC}Database was restored.${NC}\n\n";
+	fi
+}
+
+remove_file(){
+	echo "Removing file copyed..."
+	rm -f $MDB_VOLUME/backup/$MDB_DB.bkp
+}
+
+checking_container
+copy_file
+execute_command
+remove_file

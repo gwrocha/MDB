@@ -101,10 +101,10 @@ load_config()
 }
 
 execute_command(){
+	MDB_VOLUME="$MDB_HOME/volumes/$MDB_CONFIG";
 	case $1 in
 		start)
-			MDB_VOLUME_DATA="$MDB_HOME/volumes/$MDB_CONFIG";
-			sh $MDB_HOME/bin/start_sgbd $MDB_SGBD $MDB_VOLUME_DATA $MDB_VERSION $MDB_NAME $MDB_PASS $MDB_PORT
+			sh $MDB_HOME/bin/start_sgbd $MDB_SGBD $MDB_VOLUME $MDB_VERSION $MDB_NAME $MDB_PASS $MDB_PORT
 			break;;
 		stop)
 			sh $MDB_HOME/bin/stop_sgbd $MDB_NAME
@@ -116,7 +116,7 @@ execute_command(){
 			sh $MDB_HOME/bin/drop_database $MDB_SGBD $MDB_NAME $MDB_PASS $MDB_DB
 			break;;
 		restore)
-			sh $MDB_HOME/bin/restore_database $MDB_SGBD $MDB_NAME $MDB_PASS $MDB_DB $MDB_FILE
+			sh $MDB_HOME/bin/restore_database $MDB_SGBD $MDB_VOLUME $MDB_NAME $MDB_PASS $MDB_DB $MDB_FILE
 			break;;
 	esac
 }
